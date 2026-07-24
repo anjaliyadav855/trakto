@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { API_URL } from '../config'
 
 function OwnerDashboard() {
   const [bookings, setBookings] = useState([])
@@ -7,16 +8,16 @@ function OwnerDashboard() {
   const statusFlow = ['requested', 'assigned', 'in-progress', 'completed']
 
   const statusColors = {
-    requested: 'bg-yellow-100 text-yellow-700',
-    assigned: 'bg-blue-100 text-blue-700',
-    'in-progress': 'bg-purple-100 text-purple-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
+    requested: 'bg-amber-50 text-amber-700 border-amber-200',
+    assigned: 'bg-blue-50 text-blue-700 border-blue-200',
+    'in-progress': 'bg-purple-50 text-purple-700 border-purple-200',
+    completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    cancelled: 'bg-red-50 text-red-700 border-red-200',
   }
 
   const fetchAllBookings = () => {
     setLoading(true)
-    fetch('http://localhost:5000/api/bookings')
+    fetch(`${API_URL}/api/bookings`)
       .then((res) => res.json())
       .then((data) => {
         setBookings(data)
@@ -34,7 +35,7 @@ function OwnerDashboard() {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      await fetch(`http://localhost:5000/api/bookings/${id}/status`, {
+      await fetch(`${API_URL}/api/bookings/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -52,42 +53,70 @@ function OwnerDashboard() {
     return statusFlow[idx + 1]
   }
 
-  if (loading) return <p className="text-center text-gray-400">Loading bookings...</p>
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-white rounded-2xl p-4 border border-black/5">
+            <div className="h-4 skeleton rounded w-1/2 mb-2"></div>
+            <div className="h-3 skeleton rounded w-1/3"></div>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div>
-      <h2 className="font-semibold text-lg mb-3">Saari Bookings (Owner View)</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-[var(--pine)]/10 flex items-center justify-center text-sm">
+          📋
+        </div>
+        <h2 className="font-display font-semibold text-[var(--ink)]">Saari Bookings</h2>
+        <span className="ml-auto text-xs font-mono text-[var(--muted)] bg-black/5 px-2 py-1 rounded-full">
+          {bookings.length}
+        </span>
+      </div>
+
       {bookings.length === 0 && (
-        <p className="text-sm text-gray-400">Koi booking nahi hai abhi</p>
+        <div className="text-center py-10">
+          <p className="text-3xl mb-2">📭</p>
+          <p className="text-sm text-[var(--muted)]">Koi booking nahi hai abhi</p>
+        </div>
       )}
-      {bookings.map((booking) => {
+
+      {bookings.map((booking, i) => {
         const next = getNextStatus(booking.status)
         return (
-          <div key={booking._id} className="bg-white rounded-xl p-4 shadow mb-3">
-            <div className="flex justify-between items-start mb-2">
+          <div
+            key={booking._id}
+            className="fade-up bg-white rounded-2xl p-4 shadow-sm border border-black/5 mb-3 hover:shadow-md transition-shadow duration-300"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <div className="flex justify-between items-start mb-3">
               <div>
-                <p className="font-semibold text-sm">{booking.machine?.name}</p>
-                <p className="text-xs text-gray-500">{booking.farmerName} · {booking.farmerPhone}</p>
-                <p className="text-xs text-gray-500">{booking.location} · {booking.workType}</p>
+                <p className="font-display font-semibold text-sm text-[var(--ink)]">{booking.machine?.name}</p>
+                <p className="text-xs text-[var(--muted)] mt-0.5">{booking.farmerName} · {booking.farmerPhone}</p>
+                <p className="text-xs text-[var(--muted)]">{booking.location} · {booking.workType}</p>
               </div>
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[booking.status]}`}>
+              <span className={`text-[10px] px-2.5 py-1 rounded-full font-medium border ${statusColors[booking.status]}`}>
                 {booking.status}
               </span>
             </div>
 
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-3 pt-3 border-t border-black/5">
               {next && (
                 <button
                   onClick={() => updateStatus(booking._id, next)}
-                  className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+                  className="bg-[var(--pine)] text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[var(--pine-dark)] active:scale-95 transition-all"
                 >
-                  Mark as {next}
+                  Mark as {next} →
                 </button>
               )}
               {booking.status !== 'cancelled' && booking.status !== 'completed' && (
                 <button
                   onClick={() => updateStatus(booking._id, 'cancelled')}
-                  className="bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium"
+                  className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-100 active:scale-95 transition-all"
                 >
                   Cancel
                 </button>

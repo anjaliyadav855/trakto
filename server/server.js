@@ -1,11 +1,21 @@
-require('dotenv').config()
+ require('dotenv').config()
 const express = require('express')
+const cors = require('cors')
+const connectDB = require('./config/db')
+const Machine = require('./models/Machine')
+const Booking = require('./models/Booking')
+const User = require('./models/User')
+
+const app = express()
+connectDB()
+
+app.use(cors())
+app.use(express.json())
+
 // Dynamic pricing calculator
 const calculateDynamicPrice = async (basePrice, machineType, distanceKm) => {
-  // Distance factor: closer = cheaper, farther = slightly costlier
-  const distanceFactor = 1 + (distanceKm * 0.02) // 2% increase per KM
+  const distanceFactor = 1 + (distanceKm * 0.02)
 
-  // Demand factor: check bookings in last 24 hours for this machine type
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
   const recentBookings = await Booking.countDocuments({
     createdAt: { $gte: oneDayAgo },
@@ -16,21 +26,26 @@ const calculateDynamicPrice = async (basePrice, machineType, distanceKm) => {
   else if (recentBookings > 5) demandFactor = 1.15
   else if (recentBookings > 2) demandFactor = 1.05
 
-  const finalPrice = Math.round(basePrice * distanceFactor * demandFactor)
-  return finalPrice
+  return Math.round(basePrice * distanceFactor * demandFactor)
 }
-const cors = require('cors')
-const connectDB = require('./config/db')
-const Machine = require('./models/Machine')
-const Booking = require('./models/Booking')
 
-const app = express()
-connectDB()
+// Login (find existing user or create new one)
+app.post('/api/users/login', async (req, res) => {
+  try {
+    const { name, phone, role } = req.body
+    if (!phone) return res.status(400).json({ error: 'Phone number zaroori hai' })
 
-app.use(cors())
-app.use(express.json())
+    let user = await User.findOne({ phone })
+    if (!user) {
+      user = await User.create({ name, phone, role: role || 'farmer' })
+    }
+    res.json(user)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 
-// Get all available machines
+// Get all available machines (with dynamic pricing)
 app.get('/api/machines', async (req, res) => {
   try {
     const machines = await Machine.find({ available: true })
@@ -57,26 +72,14 @@ app.get('/api/machines', async (req, res) => {
 app.post('/api/machines', async (req, res) => {
   try {
     const { name, type, owner, ownerPhone, distance, price } = req.body
-    const machine = await Machine.create({
-      name,
-      type,
-      owner,
-      ownerPhone,
-      distance,
-      price,
-    })
+    const machine = await Machine.create({ name, type, owner, ownerPhone, distance, price })
     res.status(201).json(machine)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// Create a booking (farmer requests a machine)
-app.post('/api/bookings', async (req, res) => {
-  ...
-
-
-// Create a booking (farmer requests a machine)
+// Create a booking
 app.post('/api/bookings', async (req, res) => {
   try {
     const { machineId, farmerName, farmerPhone, workType, location } = req.body
@@ -106,19 +109,17 @@ app.get('/api/bookings/phone/:phone', async (req, res) => {
   }
 })
 
-// Get ALL bookings (for owner/admin dashboard)
+// Get ALL bookings (owner dashboard)
 app.get('/api/bookings', async (req, res) => {
   try {
-    const bookings = await Booking.find()
-      .populate('machine')
-      .sort({ createdAt: -1 })
+    const bookings = await Booking.find().populate('machine').sort({ createdAt: -1 })
     res.json(bookings)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// Get single booking status (for tracking)
+// Get single booking (tracking)
 app.get('/api/bookings/:id', async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id).populate('machine')
@@ -129,15 +130,11 @@ app.get('/api/bookings/:id', async (req, res) => {
   }
 })
 
-// Update booking status (assigned / in-progress / completed)
+// Update booking status
 app.patch('/api/bookings/:id/status', async (req, res) => {
   try {
     const { status } = req.body
-    const booking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    )
+    const booking = await Booking.findByIdAndUpdate(req.params.id, { status }, { new: true })
     res.json(booking)
   } catch (err) {
     res.status(500).json({ error: err.message })

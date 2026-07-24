@@ -14,13 +14,11 @@ function SearchBox({ onSearch }) {
     }
 
     const recognition = new SpeechRecognition()
-    recognition.lang = 'hi-IN' // Hindi (India)
+    recognition.lang = 'hi-IN'
     recognition.continuous = false
     recognition.interimResults = false
 
-    recognition.onstart = () => {
-      setListening(true)
-    }
+    recognition.onstart = () => setListening(true)
 
     recognition.onresult = (event) => {
       const text = event.results[0][0].transcript
@@ -33,32 +31,42 @@ function SearchBox({ onSearch }) {
       setListening(false)
     }
 
-    recognition.onend = () => {
-      setListening(false)
-    }
+    recognition.onend = () => setListening(false)
 
     recognition.start()
     recognitionRef.current = recognition
   }
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow mb-4">
-      <p className="text-sm text-gray-500 mb-2">Bolkar khoje</p>
+    <div className="bg-white rounded-2xl p-4 shadow-sm border border-black/5 mb-4">
+      <p className="text-xs font-mono uppercase tracking-wider text-[var(--muted)] mb-2.5">
+        Bolkar khoje
+      </p>
       <button
         onClick={startListening}
         disabled={listening}
-        className={`w-full py-2 rounded-lg font-medium transition-colors ${
+        className={`w-full py-3 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
           listening
-            ? 'bg-red-100 text-red-600 animate-pulse'
-            : 'bg-green-100 text-green-700'
+            ? 'bg-[var(--sky)]/10 text-[var(--sky)]'
+            : 'bg-[var(--pine)]/8 text-[var(--pine)] hover:bg-[var(--pine)]/15 active:scale-[0.98]'
         }`}
       >
-        {listening ? '🔴 Sun raha hoon...' : '🎤 Tap karke boliye'}
+        {listening ? (
+          <>
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--sky)] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--sky)]"></span>
+            </span>
+            Sun raha hoon...
+          </>
+        ) : (
+          <>🎤 Tap karke boliye</>
+        )}
       </button>
 
       {transcript && (
-        <p className="text-sm text-gray-600 mt-2">
-          Aapne kaha: <span className="font-medium">{transcript}</span>
+        <p className="text-sm text-[var(--muted)] mt-2.5 fade-up">
+          Aapne kaha: <span className="font-medium text-[var(--ink)]">"{transcript}"</span>
         </p>
       )}
     </div>
