@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import { API_URL } from '../config'
 
 function OwnerDashboard() {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [expandedMap, setExpandedMap] = useState(null)
 
   const statusFlow = ['requested', 'assigned', 'in-progress', 'completed']
 
@@ -87,6 +89,9 @@ function OwnerDashboard() {
 
       {bookings.map((booking, i) => {
         const next = getNextStatus(booking.status)
+        const hasLocation = booking.locationLat && booking.locationLng
+        const mapOpen = expandedMap === booking._id
+
         return (
           <div
             key={booking._id}
@@ -103,6 +108,34 @@ function OwnerDashboard() {
                 {booking.status}
               </span>
             </div>
+
+            {hasLocation && (
+              <div className="mb-3">
+                <button
+                  onClick={() => setExpandedMap(mapOpen ? null : booking._id)}
+                  className="text-xs text-[var(--sky)] font-medium flex items-center gap-1 hover:underline"
+                >
+                  📍 {mapOpen ? 'Map chhupao' : 'Map pe location dekho'}
+                </button>
+
+                {mapOpen && (
+                  <div className="mt-2 rounded-xl overflow-hidden border border-black/10 fade-up" style={{ height: '160px' }}>
+                    <MapContainer
+                      center={[booking.locationLat, booking.locationLng]}
+                      zoom={14}
+                      style={{ height: '100%', width: '100%' }}
+                      scrollWheelZoom={false}
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; OpenStreetMap contributors'
+                      />
+                      <Marker position={[booking.locationLat, booking.locationLng]} />
+                    </MapContainer>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-2 mt-3 pt-3 border-t border-black/5">
               {next && (

@@ -82,13 +82,15 @@ app.post('/api/machines', async (req, res) => {
 // Create a booking
 app.post('/api/bookings', async (req, res) => {
   try {
-    const { machineId, farmerName, farmerPhone, workType, location } = req.body
+    const { machineId, farmerName, farmerPhone, workType, location, locationLat, locationLng } = req.body
     const booking = await Booking.create({
       machine: machineId,
       farmerName,
       farmerPhone,
       workType,
       location,
+      locationLat,
+      locationLng,
       status: 'requested',
     })
     res.status(201).json(booking)

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { API_URL } from '../config'
+import LocationPicker from './LocationPicker'
 
 const typeStyles = {
   Tractor: { icon: '🚜', gradient: 'from-[#1F4D3B] to-[#3B7A5A]' },
@@ -48,7 +49,7 @@ function MachineCard({ id, name, owner, distance, price, type, index = 0 }) {
   const [showConfetti, setShowConfetti] = useState(false)
   const [farmerName, setFarmerName] = useState('')
   const [farmerPhone, setFarmerPhone] = useState('')
-  const [location, setLocation] = useState('')
+  const [locationData, setLocationData] = useState(null)
 
   const style = typeStyles[type] || typeStyles.Tractor
 
@@ -67,7 +68,9 @@ function MachineCard({ id, name, owner, distance, price, type, index = 0 }) {
           farmerName,
           farmerPhone,
           workType: 'Ploughing',
-          location,
+          location: locationData?.address || '',
+          locationLat: locationData?.lat,
+          locationLng: locationData?.lng,
         }),
       })
       if (!res.ok) throw new Error('Booking failed')
@@ -125,13 +128,7 @@ function MachineCard({ id, name, owner, distance, price, type, index = 0 }) {
               onChange={(e) => setFarmerPhone(e.target.value)}
               className="w-full border border-black/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pine)]/20 focus:border-[var(--pine)] transition-all"
             />
-            <input
-              type="text"
-              placeholder="Location / Gaon ka naam"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full border border-black/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pine)]/20 focus:border-[var(--pine)] transition-all"
-            />
+            <LocationPicker onLocationSelect={setLocationData} />
           </div>
         )}
 

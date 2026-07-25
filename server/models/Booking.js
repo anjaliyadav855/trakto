@@ -5,7 +5,9 @@ const bookingSchema = new mongoose.Schema({
   farmerName: { type: String, required: true },
   farmerPhone: { type: String, required: true },
   workType: { type: String },
-  location: { type: String },
+   location: { type: String },
+  locationLat: { type: Number },
+  locationLng: { type: Number },
   status: {
     type: String,
     enum: ['requested', 'assigned', 'in-progress', 'completed', 'cancelled'],
