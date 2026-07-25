@@ -8,10 +8,44 @@ const typeStyles = {
   Seeder: { icon: '🌱', gradient: 'from-[#6B9E5E] to-[#4C7D42]' },
 }
 
+const CONFETTI_COLORS = ['#D9A441', '#1F4D3B', '#3B6E8F', '#E8C875', '#6B9E5E']
+
+function Confetti() {
+  const pieces = Array.from({ length: 24 })
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+      {pieces.map((_, i) => {
+        const left = Math.random() * 100
+        const delay = Math.random() * 0.3
+        const duration = 0.8 + Math.random() * 0.6
+        const color = CONFETTI_COLORS[i % CONFETTI_COLORS.length]
+        const size = 5 + Math.random() * 5
+        const isCircle = Math.random() > 0.5
+        return (
+          <span
+            key={i}
+            className="confetti-piece absolute top-0"
+            style={{
+              left: `${left}%`,
+              width: `${size}px`,
+              height: `${size}px`,
+              backgroundColor: color,
+              borderRadius: isCircle ? '50%' : '2px',
+              animationDelay: `${delay}s`,
+              animationDuration: `${duration}s`,
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 function MachineCard({ id, name, owner, distance, price, type, index = 0 }) {
   const [booked, setBooked] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
   const [farmerName, setFarmerName] = useState('')
   const [farmerPhone, setFarmerPhone] = useState('')
   const [location, setLocation] = useState('')
@@ -39,6 +73,8 @@ function MachineCard({ id, name, owner, distance, price, type, index = 0 }) {
       if (!res.ok) throw new Error('Booking failed')
       setBooked(true)
       setShowForm(false)
+      setShowConfetti(true)
+      setTimeout(() => setShowConfetti(false), 1600)
     } catch (err) {
       console.error(err)
       alert('Booking fail ho gayi, dobara try karo')
@@ -49,10 +85,11 @@ function MachineCard({ id, name, owner, distance, price, type, index = 0 }) {
 
   return (
     <div
-      className="fade-up bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 mb-3"
+      className="fade-up relative bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 mb-3"
       style={{ animationDelay: `${index * 70}ms` }}
     >
-      {/* Illustrated gradient banner */}
+      {showConfetti && <Confetti />}
+
       <div className={`relative h-24 bg-gradient-to-br ${style.gradient} flex items-center justify-center overflow-hidden`}>
         <span className="text-5xl drop-shadow-md transition-transform duration-500 hover:scale-110">
           {style.icon}
